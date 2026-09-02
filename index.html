@@ -367,16 +367,6 @@
   </div>
 </header>
 
-<!-- AVISO GENERAL DEL DUEÑO (banner, distinto de los avisos de ruta de los choferes) -->
-<div id="ownerNoticeBanner" class="hidden">
-  <div class="max-w-md mx-auto px-4 pt-3">
-    <div class="rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5" style="background:color-mix(in srgb, var(--talavera) 14%, var(--paper-2)); border:1px solid color-mix(in srgb, var(--talavera) 35%, var(--border));">
-      <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style="background:var(--paper-2); color:var(--talavera);"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i></span>
-      <p id="ownerNoticeText" class="text-[12.5px] font-medium leading-snug"></p>
-    </div>
-  </div>
-</div>
-
 <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
 
   <!-- SELECTOR DE RAMAL -->
@@ -399,7 +389,6 @@
       <div>
         <p class="text-[11px] uppercase tracking-wider font-semibold" style="color:var(--ink-soft);">En este momento</p>
         <p id="freqText" class="font-display font-bold text-2xl leading-tight mt-0.5" style="color:var(--route-color);">Calculando…</p>
-        <p id="nextDepartureText" class="font-mono text-[12px] mt-1.5" style="color:var(--ink-soft);"></p>
         <span id="avgRatingBadge" class="hidden mt-2 inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-1 rounded-full" style="background:color-mix(in srgb, var(--cempasuchil) 16%, var(--paper-2)); color:var(--cempasuchil-dark);">
           <i data-lucide="star" class="w-3 h-3"></i> <span id="avgRatingValue">--</span>
         </span>
@@ -419,7 +408,7 @@
         <p class="font-mono font-bold text-lg mt-0.5">9:30 PM</p>
       </div>
     </div>
-    <p class="text-[10px] mt-3" style="color:var(--ink-soft); opacity:.8;">*Hora de próxima salida estimada, recuerde que es un aproximado.</p>
+    <p class="text-[10px] mt-3" style="color:var(--ink-soft); opacity:.8;">*Horario de referencia, puede variar un poco según el tráfico del día.</p>
   </section>
 
   <!-- TARIFAS -->
@@ -593,30 +582,83 @@ const ROUTES = {
     color: '#F5900C',
     colorDark: '#CB7208',
     label: 'Por Capilla',
-    // Trazado real: Av. Guadalupe Victoria → 2A de Guadalupe Victoria → Adolfo López Mateos →
-    // Tercera de Allende → C. Aldama → C. Manuel Padre Montés → Av. Sur → Calle Nacional Ote. →
-    // 16 de Septiembre → 5 de Mayo → Avenida Nte. → La Capilla, y de ahí se une al mismo
-    // tramo del ramal Secundaria (Cam. Real Iztaccíhuatl / San Salvador el Verde) hasta la Central.
+    // Trazado real capturado con GPS (Geo Tracker, 7 ago 2026): Av. Guadalupe Victoria →
+    // 2A de Guadalupe Victoria → Adolfo López Mateos → Tercera de Allende → C. Aldama →
+    // C. Manuel Padre Montés → Av. Sur → Calle Nacional Ote. → 16 de Septiembre → 5 de Mayo →
+    // Avenida Nte. → La Capilla, y de ahí se une al mismo tramo del ramal Secundaria
+    // (Cam. Real Iztaccíhuatl / San Salvador el Verde) hasta la Central.
     path: [
-      [19.260428, -98.475840], // Base San Simón (Av. Guadalupe Victoria)
-      [19.261700, -98.475000], // aprox. 2A de Guadalupe Victoria / Adolfo López Mateos, pendiente afinar
-      [19.263000, -98.474400], // aprox. Tercera de Allende / C. Aldama, pendiente afinar
-      [19.264300, -98.473500], // aprox. C. Manuel Padre Montés / Av. Sur, pendiente afinar
-      [19.26266319415861, -98.473783073471], // Centro de Salud y Campo Deportivo
-      [19.26503592756045, -98.47278593212418], // Iglesia San Simón y Plaza
-      [19.266500, -98.473600], // aprox. 16 de Septiembre / 5 de Mayo, pendiente afinar
-      [19.267305412889165, -98.47392478914037], // La Capilla, entrada al pueblo
-      [19.269500, -98.465000], // aprox. tramo hacia Cam. Real Iztaccíhuatl, pendiente afinar
-      [19.272046787005376, -98.46081561175298], // entrada a San Rafael Tlanalapan
-      [19.27267554685216, -98.4589748845061], // Los Arcos
-      [19.273297956240363, -98.4576530200491], // Caja de agua
-      [19.274398635598594, -98.45436098967812], // El Libramiento
-      [19.276800, -98.448500], // aprox. Cam. Real Iztaccíhuatl / San Salvador el Verde, pendiente afinar
-      [19.279387085913882, -98.44208837241015], // Módulo de vigilancia
-      [19.280500, -98.439700], // aprox. Agustín Lara / San Salvador el Verde, pendiente afinar
-      [19.28161584992344, -98.43741861590993], // Secundaria La Uno (Av. México)
-      [19.280700, -98.436000], // aprox. Av. México / Carr. Federal México-Puebla, pendiente afinar
-      [19.279755881243926, -98.43447995257797] // Central de Autobuses (AU), Carr. Internacional
+      [19.26241, -98.476966],
+      [19.262464, -98.476701],
+      [19.262588, -98.476468],
+      [19.262615, -98.47627],
+      [19.262573, -98.475727], // Base San Simón
+      [19.262686, -98.475478],
+      [19.262626, -98.474936],
+      [19.262685, -98.474646],
+      [19.262708, -98.473869], // Centro de Salud y Campo Deportivo
+      [19.262803, -98.473832],
+      [19.263925, -98.473923],
+      [19.265586, -98.473918], // Iglesia San Simón y Plaza
+      [19.266184, -98.47393],
+      [19.266297, -98.473967],
+      [19.266769, -98.473925],
+      [19.267756, -98.473998], // La Capilla, entrada al pueblo
+      [19.268021, -98.474077],
+      [19.268024, -98.474344],
+      [19.267629, -98.476399],
+      [19.267577, -98.477035],
+      [19.267128, -98.479442],
+      [19.267096, -98.479702],
+      [19.267131, -98.479827],
+      [19.267296, -98.478634],
+      [19.268019, -98.474733],
+      [19.268141, -98.473818],
+      [19.268444, -98.472319],
+      [19.268651, -98.471736],
+      [19.269067, -98.470112],
+      [19.2695, -98.468752],
+      [19.270285, -98.465857],
+      [19.270692, -98.464625],
+      [19.270773, -98.464226],
+      [19.271005, -98.463506],
+      [19.271385, -98.462644],
+      [19.271798, -98.461534],
+      [19.272074, -98.460994],
+      [19.272057, -98.460737], // entrada a San Rafael Tlanalapan
+      [19.272528, -98.459672],
+      [19.272659, -98.45925],
+      [19.272877, -98.458821], // Los Arcos
+      [19.27307, -98.458139],
+      [19.27332, -98.457685], // Caja de agua
+      [19.273429, -98.457292],
+      [19.273883, -98.456255],
+      [19.273859, -98.456122],
+      [19.273941, -98.455808],
+      [19.274435, -98.454638], // El Libramiento
+      [19.274698, -98.453706],
+      [19.275174, -98.452299],
+      [19.275771, -98.450744],
+      [19.275813, -98.450381],
+      [19.276447, -98.449014],
+      [19.276942, -98.447783],
+      [19.277186, -98.447362],
+      [19.277426, -98.446632],
+      [19.277759, -98.446002],
+      [19.279087, -98.442932],
+      [19.279508, -98.442208], // Módulo de vigilancia
+      [19.279763, -98.441548],
+      [19.280404, -98.440398],
+      [19.28092, -98.439208],
+      [19.281383, -98.438613],
+      [19.28164, -98.438036],
+      [19.281703, -98.437576], // Secundaria La Uno (Av. México)
+      [19.281724, -98.436924],
+      [19.281549, -98.436876],
+      [19.28126, -98.436552],
+      [19.281034, -98.436197],
+      [19.280599, -98.435778],
+      [19.280438, -98.435564] // Central de Autobuses (AU)
     ],
     stops: [
       { name: 'Base San Simón', lat: 19.260428, lng: -98.475840, desc: 'Av. Guadalupe Victoria, San Simón Atzitzintla. Punto de salida, sube desde temprano.' },
@@ -638,6 +680,8 @@ const ROUTES = {
     label: 'Por Secundaria',
     // Trazado real capturado sobre Av. Guadalupe Victoria → Av. Sur → C. Nacional →
     // Revolución Nte. → San Salvador el Verde / Cam. Real Iztaccíhuatl, hacia San Rafael Tlanalapan.
+    // Desde San Rafael Tlanalapan hasta la Central el trazado es el mismo que el del ramal
+    // Capilla (viene del GPS real capturado con Geo Tracker), porque ahí ya es la misma calle.
     path: [
       [19.260428, -98.475840], // Base San Simón (Av. Guadalupe Victoria)
       [19.260664, -98.474837],
@@ -663,16 +707,40 @@ const ROUTES = {
       [19.266406, -98.482229],
       [19.268338, -98.471808],
       [19.268886, -98.471208],
-      [19.272046787005376, -98.46081561175298], // entrada a San Rafael Tlanalapan
-      [19.272676, -98.458975], // Los Arcos
-      [19.273298, -98.457653], // Caja de agua
-      [19.274399, -98.454361], // El Libramiento
-      [19.276800, -98.448500], // aprox. Cam. Real Iztaccíhuatl / San Salvador el Verde, pendiente afinar
-      [19.279387, -98.442088], // Módulo de vigilancia
-      [19.280500, -98.439700], // aprox. Agustín Lara / San Salvador el Verde, pendiente afinar
-      [19.281616, -98.437419], // Secundaria La Uno (Av. México)
-      [19.280700, -98.436000], // aprox. Av. México / Carr. Federal México-Puebla, pendiente afinar
-      [19.279756, -98.434480]  // Central de Autobuses (AU), Carr. Internacional
+      [19.272057, -98.460737], // entrada a San Rafael Tlanalapan
+      [19.272528, -98.459672],
+      [19.272659, -98.45925],
+      [19.272877, -98.458821], // Los Arcos
+      [19.27307, -98.458139],
+      [19.27332, -98.457685], // Caja de agua
+      [19.273429, -98.457292],
+      [19.273883, -98.456255],
+      [19.273859, -98.456122],
+      [19.273941, -98.455808],
+      [19.274435, -98.454638], // El Libramiento
+      [19.274698, -98.453706],
+      [19.275174, -98.452299],
+      [19.275771, -98.450744],
+      [19.275813, -98.450381],
+      [19.276447, -98.449014],
+      [19.276942, -98.447783],
+      [19.277186, -98.447362],
+      [19.277426, -98.446632],
+      [19.277759, -98.446002],
+      [19.279087, -98.442932],
+      [19.279508, -98.442208], // Módulo de vigilancia
+      [19.279763, -98.441548],
+      [19.280404, -98.440398],
+      [19.28092, -98.439208],
+      [19.281383, -98.438613],
+      [19.28164, -98.438036],
+      [19.281703, -98.437576], // Secundaria La Uno (Av. México)
+      [19.281724, -98.436924],
+      [19.281549, -98.436876],
+      [19.28126, -98.436552],
+      [19.281034, -98.436197],
+      [19.280599, -98.435778],
+      [19.280438, -98.435564] // Central de Autobuses (AU)
     ],
     stops: [
       { name: 'Base San Simón', lat: 19.260428, lng: -98.475840, desc: 'Av. Guadalupe Victoria, San Simón Atzitzintla. Punto de salida, sube desde temprano.' },
@@ -696,99 +764,10 @@ let combiMarker, combiAnimId;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ============================================================
-   SONIDO (Web Audio API, sin archivos externos)
-   ============================================================ */
-let audioCtx;
-function getAudioCtx(){
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
-}
-function playTone(freq, duration, delay = 0, type = 'sine', gainPeak = 0.12){
-  try{
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    const t0 = ctx.currentTime + delay;
-    gain.gain.setValueAtTime(0, t0);
-    gain.gain.linearRampToValueAtTime(gainPeak, t0 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t0);
-    osc.stop(t0 + duration + 0.05);
-  } catch(e) { /* audio no disponible */ }
-}
-function playDing(){ playTone(880, 0.18, 0, 'sine', 0.1); playTone(1320, 0.18, 0.05, 'sine', 0.08); }
-function playHonk(){ playTone(220, 0.35, 0, 'sawtooth', 0.15); playTone(180, 0.35, 0.1, 'sawtooth', 0.15); }
-
-/* ============================================================
    VIBRACIÓN
    ============================================================ */
 function buzz(pattern){
   if (navigator.vibrate) navigator.vibrate(pattern);
-}
-
-/* ============================================================
-   CONFETI (canvas ligero, sin dependencias)
-   ============================================================ */
-function confettiBurst(colorHex, count = 60){
-  if (reduceMotion) return;
-  let canvas = document.getElementById('confettiCanvas');
-  if (!canvas) {
-    canvas = document.createElement('canvas');
-    canvas.id = 'confettiCanvas';
-    document.body.appendChild(canvas);
-  }
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  ctx.scale(dpr, dpr);
-
-  const colors = [colorHex, '#F5900C', '#1E9E5A', '#0E80BE', '#FAF7F0'];
-  const particles = Array.from({ length: count }, () => ({
-    x: window.innerWidth / 2 + (Math.random() - 0.5) * 60,
-    y: window.innerHeight * 0.25,
-    vx: (Math.random() - 0.5) * 9,
-    vy: Math.random() * -7 - 3,
-    size: Math.random() * 6 + 4,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    rot: Math.random() * 360,
-    vr: (Math.random() - 0.5) * 18,
-    life: 0,
-  }));
-
-  let frame = 0;
-  function tick(){
-    frame++;
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    let alive = false;
-    particles.forEach(p => {
-      p.vy += 0.28;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.rot += p.vr;
-      p.life++;
-      if (p.y < window.innerHeight + 20) alive = true;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = Math.max(0, 1 - p.life / 90);
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-      ctx.restore();
-    });
-    if (alive && frame < 120) {
-      requestAnimationFrame(tick);
-    } else {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    }
-  }
-  requestAnimationFrame(tick);
 }
 
 /* ============================================================
@@ -840,52 +819,8 @@ function computeFrequency(){
   return frequencyBucket(h).text;
 }
 
-/* ============================================================
-   PRÓXIMA SALIDA APROXIMADA
-   Secundaria sale primero en cada ciclo; Capilla sale ~8 min después.
-   Es un estimado basado en la frecuencia promedio del horario, no un
-   horario oficial de choferes.
-   ============================================================ */
-const CAPILLA_OFFSET_MIN = 8;
-const SERVICE_ANCHOR_HOUR = 5.5; // 5:30 AM, arranque de servicio
-
-function nextDepartureEstimate(){
-  const now = new Date();
-  const h = now.getHours() + now.getMinutes() / 60;
-  const bucket = frequencyBucket(h);
-  if (bucket.outOfService) return null;
-
-  const anchor = new Date(now);
-  anchor.setHours(5, 30, 0, 0);
-  const minsSinceAnchor = (now - anchor) / 60000;
-  const avg = bucket.avg;
-  const slots = Math.ceil((minsSinceAnchor + 0.01) / avg);
-  const nextSecundaria = new Date(anchor.getTime() + slots * avg * 60000);
-  const nextCapilla = new Date(nextSecundaria.getTime() + CAPILLA_OFFSET_MIN * 60000);
-
-  return { secundaria: nextSecundaria, capilla: nextCapilla };
-}
-
-function formatHora(date){
-  return date.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
-}
-
-function updateNextDeparture(){
-  const el = document.getElementById('nextDepartureText');
-  const est = nextDepartureEstimate();
-  if (!est) { el.innerHTML = ''; return; }
-
-  const secOn = currentRoute === 'secundaria';
-  const capOn = currentRoute === 'capilla';
-  const secStyle = secOn ? 'color:var(--route-color); font-weight:700;' : 'color:var(--ink-soft); font-weight:500;';
-  const capStyle = capOn ? 'color:var(--route-color); font-weight:700;' : 'color:var(--ink-soft); font-weight:500;';
-
-  el.innerHTML = `Próxima salida aprox · <span style="${secStyle}">Secundaria ${formatHora(est.secundaria)}</span> → <span style="${capStyle}">Capilla ${formatHora(est.capilla)}</span> <span style="opacity:.75;">(sale ~8 min después)</span>`;
-}
-
 function updateFrequency(){
   document.getElementById('freqText').textContent = computeFrequency();
-  updateNextDeparture();
 }
 updateFrequency();
 setInterval(updateFrequency, 60000);
@@ -1223,53 +1158,6 @@ if (typeof db !== 'undefined' && db) {
 }
 
 /* ============================================================
-   AVISO GENERAL DEL DUEÑO (banner)
-   Distinto de /routeEvents: aquí van mensajes que el dueño
-   publica desde dueno.html (ej. "mañana no hay servicio",
-   "domingo entramos más tarde"), no reportes de un chofer en
-   particular. Se guardan en /notices; solo se muestra el más
-   reciente marcado como activo. Si no hay Firebase o no hay
-   ningún aviso activo, el banner simplemente no aparece.
-   ============================================================ */
-let ownerNotices = [];
-let ownerNoticeIdx = 0;
-let ownerNoticeInterval = null;
-
-function renderOwnerNotice(){
-  const wrap = document.getElementById('ownerNoticeBanner');
-  const active = ownerNotices.filter(n => n.active !== false && n.text);
-  if (!active.length) {
-    wrap.classList.add('hidden');
-    if (ownerNoticeInterval) { clearInterval(ownerNoticeInterval); ownerNoticeInterval = null; }
-    return;
-  }
-  wrap.classList.remove('hidden');
-  document.getElementById('ownerNoticeText').textContent = active[ownerNoticeIdx % active.length].text;
-  if (window.lucide) lucide.createIcons();
-
-  if (!ownerNoticeInterval && active.length > 1) {
-    ownerNoticeInterval = setInterval(() => {
-      ownerNoticeIdx++;
-      renderOwnerNotice();
-    }, 6000);
-  }
-}
-
-if (typeof db !== 'undefined' && db) {
-  try {
-    db.ref('notices').on('value',
-      (snapshot) => {
-        const data = snapshot.val() || {};
-        ownerNotices = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        ownerNoticeIdx = 0;
-        renderOwnerNotice();
-      },
-      () => { /* sin conexión a Firebase por ahora, el banner no aparece */ }
-    );
-  } catch (e) { /* Firebase no configurado todavía */ }
-}
-
-/* ============================================================
    CALIFICAR TU VIAJE
    Cada calificación se guarda en /ratings (push, o sea con id
    único por envío). Con esos mismos datos calculamos el
@@ -1518,13 +1406,10 @@ function setRoute(routeKey){
 
   renderRoute();
   renderStopsList();
-  updateNextDeparture();
   if (typeof renderRouteEvents === 'function') renderRouteEvents();
 
   if (changed) {
     buzz(20);
-    playDing();
-    confettiBurst(route.color, 40);
   }
 }
 
