@@ -51,6 +51,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 
+<!-- QRCode (para el código de la tarjeta de lealtad del pasajero) -->
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+
 <style>
   :root{
     /* Nivel 1 — fondo neutro cálido (no blanco puro, no slate frío) */
@@ -100,6 +103,29 @@
     font-family:'Plus Jakarta Sans', sans-serif;
     transition: background-color .25s ease, color .25s ease;
     overscroll-behavior-y: contain;
+    position: relative;
+  }
+
+  /* Fondo fijo: foto de la Route 66, con velo del color de fondo
+     encima (cambia solo con --paper) para que el texto siga
+     legible en modo claro y oscuro. */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-2;
+    background-image:url('fondo-route66.jpg');
+    background-size:cover;
+    background-position:center 35%;
+    background-repeat:no-repeat;
+  }
+  body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:color-mix(in srgb, var(--paper) 80%, transparent);
+    transition: background-color .25s ease;
   }
   .font-display{ font-family:'Sora', sans-serif; letter-spacing:-.01em; }
   .font-mono{ font-family:'JetBrains Mono', monospace; }
@@ -112,13 +138,16 @@
     transition: background-color .35s ease;
   }
 
-  /* Tarjeta base del sistema — superficie elevada, borde sutil, sombra difuminada */
+  /* Tarjeta base del sistema — superficie elevada, borde sutil, sombra difuminada.
+     Ahora semitransparente con desenfoque para que se vea el fondo de la carretera. */
   .placard{
-    background: var(--paper-2);
+    background: color-mix(in srgb, var(--paper-2) 80%, transparent);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--border);
     border-radius: 1.25rem;
     box-shadow: var(--shadow);
-    transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+    transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease, background-color .25s ease;
   }
   .placard-hover:hover{
     box-shadow: var(--shadow-md);
@@ -127,7 +156,9 @@
 
   .route-btn{
     border: 1.5px solid var(--border);
-    background: var(--paper-2);
+    background: color-mix(in srgb, var(--paper-2) 82%, transparent);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
     color: var(--ink-soft);
     border-radius: 1.25rem;
     transition: all .25s ease;
@@ -283,6 +314,20 @@
     *{ transition: none !important; animation: none !important; }
     .combi-emoji{ transition:none !important; }
   }
+
+  /* Estrellas del formulario de calificación */
+  .rating-star{
+    font-size: 30px;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--border);
+    transition: color .15s ease, transform .15s ease;
+  }
+  .rating-star:hover{ transform: scale(1.15); }
+  .rating-star:active{ transform: scale(.95); }
 </style>
 </head>
 <body class="font-body pb-10" style="--route-color:#F5900C;">
@@ -291,7 +336,7 @@
 <div id="ribbon"></div>
 
 <!-- HEADER -->
-<header class="sticky top-0 z-30 backdrop-blur" style="background:color-mix(in srgb, var(--paper) 92%, transparent); border-bottom:1px solid var(--border);">
+<header class="sticky top-0 z-30 backdrop-blur" style="background:color-mix(in srgb, var(--paper) 85%, transparent); border-bottom:1px solid var(--border);">
   <div class="max-w-md mx-auto flex items-center justify-between px-4 py-3">
     <div class="flex items-center gap-2.5">
       <button id="hornBtn" aria-label="Bocinazo de la combi" class="btn-lift w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style="background:linear-gradient(155deg, var(--talavera) 0%, var(--talavera-dark) 100%);">
@@ -322,6 +367,16 @@
   </div>
 </header>
 
+<!-- AVISO GENERAL DEL DUEÑO (banner, distinto de los avisos de ruta de los choferes) -->
+<div id="ownerNoticeBanner" class="hidden">
+  <div class="max-w-md mx-auto px-4 pt-3">
+    <div class="rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5" style="background:color-mix(in srgb, var(--talavera) 14%, var(--paper-2)); border:1px solid color-mix(in srgb, var(--talavera) 35%, var(--border));">
+      <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style="background:var(--paper-2); color:var(--talavera);"><i data-lucide="megaphone" class="w-3.5 h-3.5"></i></span>
+      <p id="ownerNoticeText" class="text-[12.5px] font-medium leading-snug"></p>
+    </div>
+  </div>
+</div>
+
 <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
 
   <!-- SELECTOR DE RAMAL -->
@@ -345,6 +400,9 @@
         <p class="text-[11px] uppercase tracking-wider font-semibold" style="color:var(--ink-soft);">En este momento</p>
         <p id="freqText" class="font-display font-bold text-2xl leading-tight mt-0.5" style="color:var(--route-color);">Calculando…</p>
         <p id="nextDepartureText" class="font-mono text-[12px] mt-1.5" style="color:var(--ink-soft);"></p>
+        <span id="avgRatingBadge" class="hidden mt-2 inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-1 rounded-full" style="background:color-mix(in srgb, var(--cempasuchil) 16%, var(--paper-2)); color:var(--cempasuchil-dark);">
+          <i data-lucide="star" class="w-3 h-3"></i> <span id="avgRatingValue">--</span>
+        </span>
       </div>
       <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style="background:color-mix(in srgb, var(--route-color) 16%, var(--paper-2)); color:var(--route-color);">
         <i data-lucide="clock-4"></i>
@@ -398,6 +456,41 @@
     </p>
   </section>
 
+  <!-- LEALTAD: TARJETA DE VIAJES -->
+  <section class="placard placard-hover p-5">
+    <div class="flex items-center justify-between mb-3.5">
+      <h2 class="font-display font-semibold text-sm uppercase tracking-wide" style="color:var(--ink-soft);">Mi tarjeta de viajes</h2>
+      <span class="w-8 h-8 rounded-full flex items-center justify-center" style="background:color-mix(in srgb, var(--agave) 18%, var(--paper-2)); color:var(--agave);"><i data-lucide="ticket" class="w-4 h-4"></i></span>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="shrink-0 rounded-2xl p-2" style="background:#fff; border:1.5px solid var(--border);">
+        <canvas id="loyaltyQR" width="84" height="84"></canvas>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p id="loyaltyStatusText" class="font-display font-bold text-[15px] leading-tight">Cargando…</p>
+        <p class="text-[12px] mt-1" style="color:var(--ink-soft);">Muéstrale este código al chofer en cada viaje. Junta 10 y el siguiente es gratis.</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <div class="flex justify-between mb-1.5">
+        <span class="text-[11px] font-semibold uppercase tracking-wide" style="color:var(--ink-soft);">Progreso</span>
+        <span id="loyaltyCountText" class="text-[11px] font-mono font-bold" style="color:var(--agave);">0 / 10</span>
+      </div>
+      <div class="w-full h-2.5 rounded-full overflow-hidden" style="background:var(--surface);">
+        <div id="loyaltyBar" class="h-full rounded-full" style="width:0%; background:linear-gradient(90deg, var(--agave) 0%, var(--agave-dark) 100%); transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <div id="loyaltyRewardBanner" class="hidden mt-4 rounded-2xl p-3 flex items-center gap-2.5" style="background:color-mix(in srgb, var(--agave) 14%, var(--paper-2));">
+      <i data-lucide="party-popper" class="w-4 h-4 shrink-0" style="color:var(--agave-dark);"></i>
+      <p class="text-[12.5px] font-semibold" style="color:var(--agave-dark);">¡Ya tienes un viaje gratis! Enséñale tu código al chofer para canjearlo.</p>
+    </div>
+
+    <p class="text-[10px] mt-3" style="color:var(--ink-soft); opacity:.8;">*El chofer suma tu viaje al leer este código. Es personal, no lo compartas.</p>
+  </section>
+
   <!-- ALERTA DE TIANGUIS -->
   <section id="tianguisAlert" class="hidden rounded-2xl p-4 flex items-start gap-3" style="background:var(--alerta-bg); border:1px solid var(--alerta);">
     <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:var(--paper-2); color:var(--alerta);"><i data-lucide="triangle-alert" class="w-4 h-4"></i></span>
@@ -437,6 +530,45 @@
   <section>
     <h2 class="font-display font-semibold text-sm uppercase tracking-wide mb-2" style="color:var(--ink-soft);">Paradas principales</h2>
     <div id="stopsList" class="placard overflow-hidden"></div>
+  </section>
+
+  <!-- CALIFICAR -->
+  <section class="placard placard-hover p-5">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="font-display font-semibold text-sm uppercase tracking-wide" style="color:var(--ink-soft);">Califica tu viaje</h2>
+      <span class="w-8 h-8 rounded-full flex items-center justify-center" style="background:color-mix(in srgb, var(--cempasuchil) 18%, var(--paper-2)); color:var(--cempasuchil);"><i data-lucide="star" class="w-4 h-4"></i></span>
+    </div>
+    <p id="avgRatingText" class="text-[12px] mb-3.5" style="color:var(--ink-soft);">Sé el primero en calificar hoy.</p>
+
+    <form id="ratingForm" class="space-y-3.5">
+      <div>
+        <label class="block text-[11px] font-semibold uppercase tracking-wide mb-1.5" style="color:var(--ink-soft);">¿Qué unidad? (opcional)</label>
+        <input id="unitInput" type="text" maxlength="24" placeholder="Ej. Unidad 03, combi verde…"
+               class="w-full px-3.5 py-2.5 rounded-xl text-sm" style="background:var(--surface); border:1.5px solid var(--border); color:var(--ink);">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-semibold uppercase tracking-wide mb-1.5" style="color:var(--ink-soft);">Calificación</label>
+        <div id="starContainer" class="flex gap-1"></div>
+        <input type="hidden" id="ratingValue" value="0">
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-semibold uppercase tracking-wide mb-1.5" style="color:var(--ink-soft);">Comentario (opcional)</label>
+        <textarea id="commentInput" rows="2" maxlength="180" placeholder="¿Cómo fue tu viaje?"
+                  class="w-full px-3.5 py-2.5 rounded-xl text-sm" style="background:var(--surface); border:1.5px solid var(--border); color:var(--ink);"></textarea>
+      </div>
+
+      <button type="submit" class="btn-lift w-full py-3 rounded-2xl font-display font-semibold text-sm flex items-center justify-center gap-2"
+              style="background:linear-gradient(155deg, var(--cempasuchil) 0%, var(--cempasuchil-dark) 100%); color:#fff;">
+        <i data-lucide="send" class="w-4 h-4"></i> Enviar calificación
+      </button>
+    </form>
+
+    <div id="ratingThanks" class="hidden mt-3.5 rounded-xl p-3 flex items-center gap-2.5" style="background:color-mix(in srgb, var(--agave) 14%, var(--paper-2));">
+      <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0" style="color:var(--agave-dark);"></i>
+      <p class="text-[12.5px] font-semibold" style="color:var(--agave-dark);">¡Gracias por tu calificación!</p>
+    </div>
   </section>
 
   <footer class="text-center text-[11px] pt-4 pb-6" style="color:var(--ink-soft);">
@@ -1035,6 +1167,20 @@ function routeEventLabel(route){
   return '';
 }
 
+// Iconos y color según el tipo de aviso que reporte el chofer desde
+// conductor.html (campo opcional "type"). Si no viene, usamos la
+// banderita genérica de siempre para no romper avisos ya guardados.
+function routeEventVisual(type){
+  switch (type) {
+    case 'trafico':      return { icon: 'car',            color: 'var(--cempasuchil)' };
+    case 'accidente':     return { icon: 'triangle-alert', color: 'var(--alerta)' };
+    case 'desvio':        return { icon: 'route',          color: 'var(--talavera)' };
+    case 'retraso':       return { icon: 'clock-4',        color: 'var(--cempasuchil)' };
+    case 'fin_servicio':  return { icon: 'moon',            color: 'var(--ink-soft)' };
+    default:               return { icon: 'flag',           color: 'var(--agave)' };
+  }
+}
+
 function renderRouteEvents(){
   const list = document.getElementById('routeEventsList');
   const emptyMsg = 'Todavía no hay avisos de los conductores hoy en este ramal.';
@@ -1045,15 +1191,18 @@ function renderRouteEvents(){
     list.innerHTML = `<p id="routeEventsEmpty" class="text-sm text-center" style="color:var(--ink-soft);">${emptyMsg}</p>`;
     return;
   }
-  list.innerHTML = filtered.slice().reverse().map((ev) => `
+  list.innerHTML = filtered.slice().reverse().map((ev) => {
+    const v = routeEventVisual(ev.type);
+    return `
     <div class="flex items-center gap-2.5">
-      <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style="background:color-mix(in srgb, var(--agave) 16%, var(--paper-2)); color:var(--agave);"><i data-lucide="flag" class="w-3.5 h-3.5"></i></span>
+      <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style="background:color-mix(in srgb, ${v.color} 16%, var(--paper-2)); color:${v.color};"><i data-lucide="${v.icon}" class="w-3.5 h-3.5"></i></span>
       <div class="min-w-0">
         <p class="text-sm font-medium truncate">${ev.label || 'Aviso de ruta'}${ev.route ? ' · ' + routeEventLabel(ev.route) : ''}</p>
         <p class="text-[11px] font-mono" style="color:var(--ink-soft);">${ev.createdAt ? timeAgoEs(ev.createdAt) : '—'}</p>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   if (window.lucide) lucide.createIcons();
 }
 
@@ -1071,6 +1220,215 @@ if (typeof db !== 'undefined' && db) {
       () => { /* sin conexión a Firebase por ahora, la app sigue funcionando normal */ }
     );
   } catch (e) { /* Firebase no configurado todavía, ver firebase-config.js */ }
+}
+
+/* ============================================================
+   AVISO GENERAL DEL DUEÑO (banner)
+   Distinto de /routeEvents: aquí van mensajes que el dueño
+   publica desde dueno.html (ej. "mañana no hay servicio",
+   "domingo entramos más tarde"), no reportes de un chofer en
+   particular. Se guardan en /notices; solo se muestra el más
+   reciente marcado como activo. Si no hay Firebase o no hay
+   ningún aviso activo, el banner simplemente no aparece.
+   ============================================================ */
+let ownerNotices = [];
+let ownerNoticeIdx = 0;
+let ownerNoticeInterval = null;
+
+function renderOwnerNotice(){
+  const wrap = document.getElementById('ownerNoticeBanner');
+  const active = ownerNotices.filter(n => n.active !== false && n.text);
+  if (!active.length) {
+    wrap.classList.add('hidden');
+    if (ownerNoticeInterval) { clearInterval(ownerNoticeInterval); ownerNoticeInterval = null; }
+    return;
+  }
+  wrap.classList.remove('hidden');
+  document.getElementById('ownerNoticeText').textContent = active[ownerNoticeIdx % active.length].text;
+  if (window.lucide) lucide.createIcons();
+
+  if (!ownerNoticeInterval && active.length > 1) {
+    ownerNoticeInterval = setInterval(() => {
+      ownerNoticeIdx++;
+      renderOwnerNotice();
+    }, 6000);
+  }
+}
+
+if (typeof db !== 'undefined' && db) {
+  try {
+    db.ref('notices').on('value',
+      (snapshot) => {
+        const data = snapshot.val() || {};
+        ownerNotices = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        ownerNoticeIdx = 0;
+        renderOwnerNotice();
+      },
+      () => { /* sin conexión a Firebase por ahora, el banner no aparece */ }
+    );
+  } catch (e) { /* Firebase no configurado todavía */ }
+}
+
+/* ============================================================
+   CALIFICAR TU VIAJE
+   Cada calificación se guarda en /ratings (push, o sea con id
+   único por envío). Con esos mismos datos calculamos el
+   promedio general que se muestra aquí y en la tarjeta de
+   inicio. No pedimos datos personales, solo unidad, estrellas
+   y comentario opcional.
+   ============================================================ */
+let selectedRating = 0;
+
+function renderStars(){
+  const wrap = document.getElementById('starContainer');
+  wrap.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rating-star';
+    btn.dataset.value = i;
+    btn.setAttribute('aria-label', `${i} estrella${i > 1 ? 's' : ''}`);
+    btn.textContent = '★';
+    wrap.appendChild(btn);
+  }
+
+  const stars = wrap.querySelectorAll('.rating-star');
+  function paint(upTo){
+    stars.forEach(s => {
+      s.style.color = parseInt(s.dataset.value) <= upTo ? 'var(--cempasuchil)' : 'var(--border)';
+    });
+  }
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.dataset.value);
+      document.getElementById('ratingValue').value = selectedRating;
+      paint(selectedRating);
+      buzz(10);
+    });
+    star.addEventListener('mouseenter', () => paint(parseInt(star.dataset.value)));
+  });
+  wrap.addEventListener('mouseleave', () => paint(selectedRating));
+}
+
+function renderAvgRating(ratings){
+  const count = ratings.length;
+  const avgText = document.getElementById('avgRatingText');
+  const badge = document.getElementById('avgRatingBadge');
+  const badgeValue = document.getElementById('avgRatingValue');
+
+  if (!count) {
+    avgText.textContent = 'Sé el primero en calificar hoy.';
+    badge.classList.add('hidden');
+    return;
+  }
+  const avg = ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / count;
+  const avgFixed = avg.toFixed(1);
+  avgText.textContent = `★ ${avgFixed} de promedio · ${count} calificaci${count === 1 ? 'ón' : 'ones'}`;
+  badge.classList.remove('hidden');
+  badgeValue.textContent = avgFixed;
+  if (window.lucide) lucide.createIcons();
+}
+
+if (typeof db !== 'undefined' && db) {
+  try {
+    db.ref('ratings').on('value',
+      (snapshot) => {
+        const data = snapshot.val() || {};
+        renderAvgRating(Object.values(data));
+      },
+      () => { /* sin conexión, se queda el mensaje por defecto */ }
+    );
+  } catch (e) { /* Firebase no configurado todavía */ }
+}
+
+document.getElementById('ratingForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const rating = parseInt(document.getElementById('ratingValue').value) || 0;
+  if (!rating) {
+    buzz([10, 30, 10]);
+    return;
+  }
+
+  const entry = {
+    unit: document.getElementById('unitInput').value.trim() || null,
+    rating,
+    comment: document.getElementById('commentInput').value.trim() || null,
+    route: currentRoute,
+    createdAt: Date.now(),
+  };
+
+  const finish = () => {
+    document.getElementById('ratingForm').reset();
+    selectedRating = 0;
+    renderStars();
+    document.getElementById('ratingThanks').classList.remove('hidden');
+    buzz(20);
+    playDing();
+    setTimeout(() => document.getElementById('ratingThanks').classList.add('hidden'), 3500);
+  };
+
+  if (typeof db !== 'undefined' && db) {
+    try {
+      db.ref('ratings').push(entry).then(finish).catch(finish);
+    } catch (e) { finish(); }
+  } else {
+    finish(); // sin Firebase configurado, igual confirmamos al pasajero
+  }
+});
+
+/* ============================================================
+   LEALTAD: TARJETA DE VIAJES
+   El código QR se genera una sola vez por celular y se guarda en
+   localStorage — es lo único que identifica al pasajero, sin
+   pedir nombre ni teléfono. El chofer lo lee desde conductor.html
+   para sumar el viaje en /loyalty/<código>/trips; aquí solo
+   LEEMOS ese número en tiempo real, nunca lo sumamos nosotros
+   mismos (para que no se pueda hacer trampa desde la app).
+   ============================================================ */
+const LOYALTY_GOAL = 10;
+
+function getOrCreatePassengerCode(){
+  let code = localStorage.getItem('passengerCode');
+  if (!code) {
+    code = 'RS-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    localStorage.setItem('passengerCode', code);
+  }
+  return code;
+}
+
+function renderLoyaltyProgress(trips){
+  const n = Math.max(0, trips || 0);
+  const inCycle = n % LOYALTY_GOAL;
+  const freeReady = n > 0 && inCycle === 0;
+  const shown = freeReady ? LOYALTY_GOAL : inCycle;
+
+  document.getElementById('loyaltyCountText').textContent = `${shown} / ${LOYALTY_GOAL}`;
+  document.getElementById('loyaltyBar').style.width = `${(shown / LOYALTY_GOAL) * 100}%`;
+  document.getElementById('loyaltyStatusText').textContent = freeReady
+    ? '¡Tu próximo viaje es gratis! 🎉'
+    : `Llevas ${shown} de ${LOYALTY_GOAL} viajes`;
+  document.getElementById('loyaltyRewardBanner').classList.toggle('hidden', !freeReady);
+}
+
+function initLoyalty(){
+  const code = getOrCreatePassengerCode();
+
+  if (window.QRCode) {
+    QRCode.toCanvas(document.getElementById('loyaltyQR'), code, {
+      width: 84, margin: 0, color: { dark: '#221B12', light: '#00000000' }
+    }, () => {});
+  }
+
+  renderLoyaltyProgress(0);
+
+  if (typeof db !== 'undefined' && db) {
+    try {
+      db.ref('loyalty/' + code + '/trips').on('value',
+        (snap) => renderLoyaltyProgress(snap.val() || 0),
+        () => { /* sin conexión, se queda en 0 por ahora */ }
+      );
+    } catch (e) { /* Firebase no configurado todavía */ }
+  }
 }
 
 /* ============================================================
@@ -1235,6 +1593,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.lucide) lucide.createIcons();
   initMap();
   renderStopsList();
+  renderStars();
+  initLoyalty();
 });
 </script>
 </body>
