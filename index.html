@@ -88,7 +88,7 @@
     }
 
     *{ -webkit-tap-highlight-color: transparent; }
-    html, body{ height:100%; }
+    html, body{ height:100%; overflow-x:hidden; }
     body{
       background:var(--paper);
       color:var(--ink);
@@ -96,6 +96,8 @@
       transition: background-color .25s ease, color .25s ease;
       overscroll-behavior-y: contain;
       position: relative;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     body::before{
@@ -482,7 +484,7 @@
       </div>
     </div>
     <div class="placard overflow-hidden relative">
-      <span id="combiDirectionBadge" class="absolute top-2.5 left-2.5 z-[500] text-[11px] font-semibold px-2.5 py-1.5 rounded-full font-display" style="background:var(--paper-2); border:1.5px solid var(--route-color); color:var(--route-color); box-shadow:var(--shadow);"></span>
+      <span id="combiDirectionBadge" class="absolute top-2.5 left-2.5 right-2.5 z-[500] text-[11px] font-semibold px-2.5 py-1.5 rounded-full font-display truncate" style="background:var(--paper-2); border:1.5px solid var(--route-color); color:var(--route-color); box-shadow:var(--shadow); max-width:calc(100% - 20px); width:fit-content;"></span>
       <div id="map"></div>
     </div>
     <p id="locateStatus" class="text-[11px] mt-1.5 hidden" style="color:var(--ink-soft);"></p>
@@ -1261,11 +1263,11 @@ function renderAvisos(){
               <i data-lucide="${style.icon}" class="w-4 h-4"></i>
             </span>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2 mb-1">
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                 <span class="text-[10.5px] font-semibold" style="color:${style.color};">${style.label}</span>
-                <span class="text-[10.5px] font-mono font-semibold px-2 py-0.5 rounded-full shrink-0" style="background:var(--surface); color:var(--ink-soft);">${formatVigencia(a.expiresAt)}</span>
+                <span class="text-[10.5px] font-mono font-semibold px-2 py-0.5 rounded-full ml-auto shrink-0" style="background:var(--surface); color:var(--ink-soft);">${formatVigencia(a.expiresAt)}</span>
               </div>
-              <p class="text-[13.5px] leading-snug" style="color:var(--ink);">${a.mensaje}</p>
+              <p class="text-[13.5px] leading-snug break-words" style="color:var(--ink);">${a.mensaje}</p>
             </div>
           </div>
         </section>
@@ -1319,9 +1321,14 @@ function switchTab(tabId){
     btn.classList.toggle('active', btn.dataset.tab === tabId);
   });
 
-  // Si es la pestaña de mapa, invalidar tamaño del mapa
+  // Si es la pestaña de mapa, invalidar tamaño del mapa y volver a encuadrar la ruta
+  // (el mapa se inicializa oculto, así que su tamaño/zoom queda mal calculado
+  // hasta que la pestaña realmente se muestra en pantalla)
   if (tabId === 'mapa' && map) {
-    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => {
+      map.invalidateSize();
+      if (pathLayer) map.fitBounds(pathLayer.getBounds(), { padding: [24, 24] });
+    }, 120);
   }
 }
 
