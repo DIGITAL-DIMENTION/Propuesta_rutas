@@ -468,7 +468,7 @@
 
     <!-- Mini guía de navegación -->
     <div class="text-center text-xs py-2" style="color:var(--ink-soft); opacity:.7;">
-      <span class="tab-hint">👇 Toca abajo para ver el mapa, calificar o seguridad</span>
+      <span class="tab-hint">👇 Toca abajo para ver el mapa, calificar o ver avisos</span>
     </div>
   </div>
 
@@ -524,23 +524,20 @@
     </section>
   </div>
 
-  <!-- TAB SEGURIDAD -->
-  <div id="tab-seguridad" class="tab-content space-y-4">
-    <section class="placard placard-hover p-5">
-      <div class="flex items-center gap-3 mb-2">
-        <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:color-mix(in srgb, var(--talavera) 18%, var(--paper-2)); color:var(--talavera);"><i data-lucide="shield-check" class="w-4 h-4"></i></span>
-        <h2 class="font-display font-semibold text-sm uppercase tracking-wide" style="color:var(--ink-soft);">Seguridad</h2>
-      </div>
-      <p class="text-sm" style="color:var(--ink-soft);">
-        Todas las unidades cuentan con seguro de pasajeros y son revisadas periódicamente. 
-        Si tienes alguna incidencia, comunícate con la central al <strong class="font-mono" style="color:var(--ink);">222 123 4567</strong>.
-      </p>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <span class="text-xs px-3 py-1 rounded-full" style="background:var(--surface); color:var(--ink-soft);">🛡️ Seguro de viaje</span>
-        <span class="text-xs px-3 py-1 rounded-full" style="background:var(--surface); color:var(--ink-soft);">📞 Atención 24h</span>
-        <span class="text-xs px-3 py-1 rounded-full" style="background:var(--surface); color:var(--ink-soft);">🚐 Unidades verificadas</span>
-      </div>
-    </section>
+  <!-- TAB AVISOS -->
+  <div id="tab-avisos" class="tab-content space-y-4">
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="font-display font-semibold text-sm uppercase tracking-wide" style="color:var(--ink-soft);">Avisos de ruta</h2>
+      <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:color-mix(in srgb, var(--talavera) 18%, var(--paper-2)); color:var(--talavera);"><i data-lucide="megaphone" class="w-4 h-4"></i></span>
+    </div>
+
+    <div id="avisosList" class="space-y-3"></div>
+
+    <div id="avisosEmpty" class="placard p-6 text-center hidden">
+      <span class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3" style="background:var(--surface); color:var(--ink-soft);"><i data-lucide="megaphone" class="w-5 h-5"></i></span>
+      <p class="font-display font-semibold text-sm" style="color:var(--ink);">Sin avisos por ahora</p>
+      <p class="text-[12.5px] mt-1" style="color:var(--ink-soft);">Cuando el Dueño o el Checador publiquen un aviso, aparecerá aquí.</p>
+    </div>
   </div>
 
 </main>
@@ -556,8 +553,8 @@
   <button class="tab-btn" data-tab="calificar">
     <i data-lucide="star"></i> Calificar
   </button>
-  <button class="tab-btn" data-tab="seguridad">
-    <i data-lucide="shield-check"></i> Seguridad
+  <button class="tab-btn" data-tab="avisos">
+    <i data-lucide="megaphone"></i> Avisos
   </button>
 </nav>
 
@@ -1186,6 +1183,102 @@ function shareStopWhatsApp(stop, route){
 }
 
 /* ============================================================
+   AVISOS DE RUTA (solo visual por ahora)
+   La publicación real (Dueño/Checador) y la conexión a Supabase
+   se integrarán en una siguiente etapa. Por ahora se simula con
+   datos de ejemplo para validar el diseño y la lógica de vigencia.
+   ============================================================ */
+const MOCK_AVISOS = [
+  {
+    id: 'demo-1',
+    mensaje: 'Hoy la combi se desvía por arreglo en la calle Morelos, cerca de la Central.',
+    tipo: 'desvio',
+    createdAt: Date.now() - 1000 * 60 * 30,
+    expiresAt: Date.now() + 1000 * 60 * 60 * 5, // vence hoy mismo
+  },
+  {
+    id: 'demo-2',
+    mensaje: 'Procura salir temprano, las combis están tardando más por el tráfico de la tarde.',
+    tipo: 'info',
+    createdAt: Date.now() - 1000 * 60 * 60 * 2,
+    expiresAt: Date.now() + 1000 * 60 * 60 * 24, // vence mañana
+  },
+  {
+    id: 'demo-3',
+    mensaje: 'Por obras en la carretera, algunas corridas pueden tardar hasta 20 minutos más de lo normal.',
+    tipo: 'alerta',
+    createdAt: Date.now() - 1000 * 60 * 60 * 5,
+    expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 3, // vence en 3 días
+  },
+];
+
+const AVISO_STYLES = {
+  desvio: { icon: 'route', color: 'var(--cempasuchil)', label: 'Desvío de ruta' },
+  info:   { icon: 'info',  color: 'var(--talavera)',     label: 'Informativo' },
+  alerta: { icon: 'triangle-alert', color: 'var(--alerta)', label: 'Alerta' },
+};
+
+function formatVigencia(expiresAt){
+  const fecha = new Date(expiresAt);
+  const hoy = new Date();
+  const esMismoDia = fecha.toDateString() === hoy.toDateString();
+  const manana = new Date(hoy);
+  manana.setDate(hoy.getDate() + 1);
+  const esManana = fecha.toDateString() === manana.toDateString();
+
+  const fechaTexto = fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+  const fechaCapitalizada = fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1);
+
+  if (esMismoDia) return `Hoy, ${fechaCapitalizada}`;
+  if (esManana) return `Mañana, ${fechaCapitalizada}`;
+  return fechaCapitalizada;
+}
+
+function renderAvisos(){
+  const list = document.getElementById('avisosList');
+  const empty = document.getElementById('avisosEmpty');
+  if (!list || !empty) return;
+
+  // Filtra automáticamente los avisos ya vencidos
+  const vigentes = MOCK_AVISOS.filter(a => a.expiresAt > Date.now());
+
+  if (!vigentes.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = vigentes
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map(a => {
+      const style = AVISO_STYLES[a.tipo] || AVISO_STYLES.info;
+      return `
+        <section class="placard placard-hover p-4">
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background:color-mix(in srgb, ${style.color} 18%, var(--paper-2)); color:${style.color};">
+              <i data-lucide="${style.icon}" class="w-4 h-4"></i>
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-[10.5px] font-semibold uppercase tracking-wide" style="color:${style.color};">${style.label}</span>
+                <span class="text-[10.5px] font-mono font-semibold px-2 py-0.5 rounded-full shrink-0" style="background:var(--surface); color:var(--ink-soft);">${formatVigencia(a.expiresAt)}</span>
+              </div>
+              <p class="text-[13.5px] leading-snug" style="color:var(--ink);">${a.mensaje}</p>
+            </div>
+          </div>
+        </section>
+      `;
+    })
+    .join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// Vuelve a evaluar la vigencia cada minuto para ocultar avisos vencidos automáticamente
+setInterval(renderAvisos, 60 * 1000);
+
+/* ============================================================
    SELECTOR DE RAMAL
    ============================================================ */
 function setRoute(routeKey){
@@ -1278,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderStopsList();
   renderStars();
+  renderAvisos();
 });
 </script>
 </body>
