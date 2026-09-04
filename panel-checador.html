@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel del Checador — Ruta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10141b;
+    --panel:#181f29;
+    --panel-alt:#1f2836;
+    --raised:#242e3d;
+    --line:#2c3543;
+    --text:#f1eee5;
+    --text-dim:#93a0b2;
+    --text-faint:#5c6779;
+    --capilla:#e8944a;
+    --capilla-soft:#5a4028;
+    --capilla-wash:#26201a;
+    --secundaria:#49b7c4;
+    --secundaria-soft:#204048;
+    --secundaria-wash:#152227;
+    --next:#cfe86c;
+    --danger:#e0605a;
+    --ok:#7ac97f;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:var(--font-sans);cursor:pointer;}
+  input,select{font-family:var(--font-sans);}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    position:sticky;top:0;z-index:20;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand h1{font-size:17px;font-weight:600;margin:0;letter-spacing:0.2px;}
+  .brand span{color:var(--text-dim);font-size:13px;}
+  .tabs{display:flex;gap:4px;}
+  .tab-btn{
+    background:transparent;border:1px solid transparent;color:var(--text-dim);
+    padding:8px 14px;border-radius:6px;font-size:13.5px;font-weight:500;
+    transition:background .15s, color .15s;
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{background:var(--raised);color:var(--text);border-color:var(--line);}
+  .clock{
+    font-family:var(--font-mono);font-size:15px;color:var(--text-dim);
+    display:flex;align-items:center;gap:8px;
+  }
+  .clock .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+
+  .app{max-width:1320px;margin:0 auto;padding:26px 22px 80px;}
+  .hidden{display:none !important;}
+
+  /* ---------- section titles ---------- */
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .section-head h2{font-size:15px;font-weight:600;margin:0;color:var(--text-dim);}
+
+  /* ---------- ramal columns ---------- */
+  .ramales-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:900px){.ramales-grid{grid-template-columns:1fr;}}
+
+  .ramal-col{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .ramal-col.capilla{border-top:3px solid var(--capilla);}
+  .ramal-col.secundaria{border-top:3px solid var(--secundaria);}
+
+  .ramal-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);}
+  .ramal-head-top{display:flex;align-items:center;justify-content:space-between;}
+  .ramal-name{font-size:19px;font-weight:700;letter-spacing:0.2px;}
+  .ramal-col.capilla .ramal-name{color:var(--capilla);}
+  .ramal-col.secundaria .ramal-name{color:var(--secundaria);}
+  .margen-tag{
+    font-size:11.5px;padding:3px 9px;border-radius:20px;font-weight:600;
+    background:var(--capilla-soft);color:var(--capilla);border:1px solid var(--capilla);
+  }
+  .margen-tag.none{background:var(--secundaria-soft);color:var(--secundaria);border:1px solid var(--secundaria);}
+
+  .interval-row{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .interval-row label{font-size:12.5px;color:var(--text-dim);}
+  .interval-row input[type=number]{
+    width:60px;background:var(--raised);border:1px solid var(--line);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-family:var(--font-mono);font-size:14px;text-align:center;
+  }
+  .preset-btn{
+    background:var(--raised);border:1px solid var(--line);color:var(--text-dim);
+    padding:5px 10px;border-radius:6px;font-size:12.5px;font-family:var(--font-mono);
+  }
+  .preset-btn:hover{color:var(--text);}
+  .preset-btn.active{color:var(--bg);border-color:transparent;}
+  .ramal-col.capilla .preset-btn.active{background:var(--capilla);}
+  .ramal-col.secundaria .preset-btn.active{background:var(--secundaria);}
+
+  /* siguiente hero */
+  .hero-next{
+    margin:14px 18px 0;padding:16px 16px;border-radius:8px;
+    background:var(--panel-alt);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .hero-label{font-size:11px;color:var(--next);font-weight:700;letter-spacing:0.3px;margin-bottom:4px;}
+  .hero-time{font-family:var(--font-mono);font-size:44px;font-weight:600;line-height:1;color:var(--text);}
+  .hero-meta{font-size:13px;color:var(--text-dim);margin-top:4px;}
+  .hero-empty{color:var(--text-faint);font-size:13.5px;padding:6px 0;}
+
+  /* corridas list */
+  .corridas-list{padding:10px 18px 4px;}
+  .corrida-row{
+    display:grid;grid-template-columns:74px 1fr 1fr auto;gap:10px;align-items:center;
+    padding:9px 0;border-bottom:1px solid var(--line);
+  }
+  .corrida-row:last-child{border-bottom:none;}
+  .corrida-time{font-family:var(--font-mono);font-size:19px;font-weight:600;color:var(--text);}
+  .corrida-time.manual{color:var(--next);}
+  .corrida-time.salio{color:var(--text-faint);text-decoration:line-through;text-decoration-color:var(--text-faint);}
+  select.sel{
+    width:100%;background:var(--raised);border:1px solid var(--line);color:var(--text);
+    padding:6px 8px;border-radius:6px;font-size:12.5px;
+  }
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{
+    background:var(--raised);border:1px solid var(--line);color:var(--text-dim);
+    width:28px;height:28px;border-radius:6px;font-size:13px;display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{color:var(--text);}
+  .icon-btn.go:hover{color:var(--ok);border-color:var(--ok);}
+  .icon-btn.edit:hover{color:var(--next);border-color:var(--next);}
+
+  .vuelta-box{
+    grid-column:1 / -1;margin-top:6px;padding:8px 10px;background:var(--panel-alt);
+    border-radius:6px;border:1px dashed var(--line);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-dim);
+  }
+  .vuelta-box input[type=number]{
+    width:56px;background:var(--raised);border:1px solid var(--line);color:var(--text);
+    padding:4px 6px;border-radius:5px;font-family:var(--font-mono);text-align:center;
+  }
+  .badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.enruta{background:var(--secundaria-soft);color:var(--secundaria);}
+  .badge.lista{background:var(--capilla-soft);color:var(--capilla);}
+  .badge.ok{background:#1e3a24;color:var(--ok);}
+
+  .add-row{padding:12px 18px 16px;}
+  .btn-add{
+    width:100%;background:var(--panel-alt);border:1px dashed var(--line);color:var(--text-dim);
+    padding:9px;border-radius:7px;font-size:13px;font-weight:500;
+  }
+  .btn-add:hover{color:var(--text);border-color:var(--text-dim);}
+
+  .empty-note{color:var(--text-faint);font-size:12.5px;padding:8px 0;}
+
+  /* en ruta section */
+  .subhead{font-size:12px;color:var(--text-dim);font-weight:600;margin:16px 18px 6px;text-transform:none;}
+
+  /* ---------- board mode ---------- */
+  .board{position:fixed;inset:0;background:#0b0e13;z-index:100;display:flex;flex-direction:column;padding:26px 36px;}
+  .board-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .board-title{font-size:18px;color:var(--text-dim);font-weight:500;}
+  .board-clock{font-family:var(--font-mono);font-size:34px;font-weight:600;color:var(--text);}
+  .board-exit{background:var(--raised);border:1px solid var(--line);color:var(--text-dim);padding:8px 16px;border-radius:7px;font-size:13px;}
+  .board-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:28px;min-height:0;}
+  .board-col{border-radius:14px;padding:26px;display:flex;flex-direction:column;min-height:0;}
+  .board-col.capilla{background:linear-gradient(180deg, var(--capilla-wash), #0b0e13 70%);border:1px solid var(--capilla-soft);}
+  .board-col.secundaria{background:linear-gradient(180deg, var(--secundaria-wash), #0b0e13 70%);border:1px solid var(--secundaria-soft);}
+  .board-ramal-name{font-size:26px;font-weight:700;margin-bottom:2px;}
+  .board-col.capilla .board-ramal-name{color:var(--capilla);}
+  .board-col.secundaria .board-ramal-name{color:var(--secundaria);}
+  .board-sub{font-size:13.5px;color:var(--text-dim);margin-bottom:18px;}
+  .board-next-label{font-size:13px;color:var(--next);font-weight:700;letter-spacing:0.5px;margin-bottom:6px;}
+  .board-next-time{font-family:var(--font-mono);font-size:96px;font-weight:700;line-height:1;color:var(--text);}
+  .board-next-meta{font-size:19px;color:var(--text-dim);margin-top:8px;margin-bottom:26px;}
+  .board-list{border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;flex:1;overflow:auto;}
+  .board-list-row{display:flex;justify-content:space-between;padding:8px 0;font-family:var(--font-mono);font-size:22px;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .board-list-row span:last-child{font-family:var(--font-sans);font-size:15px;color:var(--text-dim);align-self:center;}
+  .board-foot{font-size:13.5px;color:var(--text-dim);margin-top:16px;}
+
+  /* ---------- roster tab ---------- */
+  .roster-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:900px){.roster-grid{grid-template-columns:1fr;}}
+  .roster-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;}
+  .roster-card h3{margin:0 0 12px;font-size:15px;color:var(--text-dim);}
+  .roster-item{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);}
+  .roster-item:last-child{border-bottom:none;}
+  .roster-item input{
+    flex:1;background:var(--raised);border:1px solid var(--line);color:var(--text);
+    padding:7px 9px;border-radius:6px;font-size:13.5px;
+  }
+  .roster-item .num{font-family:var(--font-mono);color:var(--text-faint);font-size:12.5px;width:26px;}
+  .roster-item .del{background:none;border:none;color:var(--text-faint);font-size:16px;padding:2px 6px;}
+  .roster-item .del:hover{color:var(--danger);}
+
+  /* ---------- driver schedule tab ---------- */
+  .driver-controls{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+  .driver-controls select{
+    background:var(--panel-alt);border:1px solid var(--line);color:var(--text);
+    padding:9px 12px;border-radius:7px;font-size:14px;min-width:220px;
+  }
+  .btn-solid{background:var(--raised);border:1px solid var(--line);color:var(--text);padding:9px 16px;border-radius:7px;font-size:13.5px;font-weight:500;}
+  .btn-solid:hover{border-color:var(--text-dim);}
+
+  #printArea{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;max-width:560px;}
+  .print-head{border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:16px;}
+  .print-head h2{margin:0 0 4px;font-size:20px;}
+  .print-head p{margin:0;color:var(--text-dim);font-size:13px;}
+  table.sched{width:100%;border-collapse:collapse;}
+  table.sched th{text-align:left;font-size:11.5px;color:var(--text-dim);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);}
+  table.sched td{padding:9px 8px;border-bottom:1px solid var(--line);font-size:14px;}
+  table.sched td.hora{font-family:var(--font-mono);font-weight:600;font-size:16px;}
+  .ramal-pill{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .ramal-pill.capilla{background:var(--capilla-soft);color:var(--capilla);}
+  .ramal-pill.secundaria{background:var(--secundaria-soft);color:var(--secundaria);}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute;top:0;left:0;width:100%;border:none;background:white;color:black;}
+    .print-head p, table.sched th{color:#555;}
+    .ramal-pill{border:1px solid #999;background:none !important;color:#000 !important;}
+  }
+
+  /* ---------- tarjeta virtual del conductor ---------- */
+  .tarjeta-wrap{
+    min-height:100vh;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .tarjeta-card{
+    width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:24px 22px 26px;
+  }
+  .tarjeta-card.capilla{border-top:4px solid var(--capilla);}
+  .tarjeta-card.secundaria{border-top:4px solid var(--secundaria);}
+  .tarjeta-card.mixto{border-top:4px solid var(--next);}
+  .tarjeta-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+  .tarjeta-nombre{font-size:22px;font-weight:700;}
+  .tarjeta-fecha{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;}
+  .tarjeta-live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);}
+  .tarjeta-live .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);}
+  .tarjeta-next{
+    background:var(--panel-alt);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:18px;
+  }
+  .tarjeta-next-label{font-size:11px;color:var(--next);font-weight:700;letter-spacing:0.4px;margin-bottom:4px;}
+  .tarjeta-next-time{font-family:var(--font-mono);font-size:52px;font-weight:700;line-height:1;}
+  .tarjeta-next-meta{font-size:14px;color:var(--text-dim);margin-top:6px;}
+  .tarjeta-next-detail{display:flex;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);}
+  .tarjeta-next-detail div{flex:1;}
+  .tarjeta-next-detail .lbl{font-size:10px;color:var(--text-faint);letter-spacing:0.3px;margin-bottom:2px;}
+  .tarjeta-next-detail .val{font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--text);}
+  .tarjeta-tabla-label{font-size:11px;color:var(--text-dim);font-weight:600;margin:18px 0 8px;}
+  table.tarjeta-tabla{width:100%;border-collapse:collapse;}
+  table.tarjeta-tabla th{text-align:left;font-size:10px;color:var(--text-faint);font-weight:600;padding:5px 6px;border-bottom:1px solid var(--line);}
+  table.tarjeta-tabla td{padding:9px 6px;border-bottom:1px solid var(--line);font-size:13px;}
+  table.tarjeta-tabla td.hora{font-family:var(--font-mono);font-weight:600;font-size:15px;}
+  table.tarjeta-tabla td.hora.pasada{color:var(--text-faint);text-decoration:line-through;}
+  table.tarjeta-tabla tr:last-child td{border-bottom:none;}
+  .tarjeta-ramal-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
+  .tarjeta-stop{
+    display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);
+  }
+  .tarjeta-stop:last-child{border-bottom:none;}
+  .tarjeta-stop-time{font-family:var(--font-mono);font-size:20px;font-weight:600;}
+  .tarjeta-stop-time.salio{color:var(--text-faint);text-decoration:line-through;}
+  .tarjeta-stop-meta{font-size:12.5px;color:var(--text-dim);text-align:right;}
+  .tarjeta-empty{color:var(--text-faint);font-size:13.5px;padding:20px 4px;text-align:center;}
+  .tarjeta-foot{margin-top:18px;font-size:11.5px;color:var(--text-faint);text-align:center;}
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--raised);border:1px solid var(--line);color:var(--text);
+    padding:10px 18px;border-radius:8px;font-size:13px;z-index:200;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Panel del Checador</h1>
+    <span>Ruta · 2 ramales</span>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn" data-tab="panel">Panel</button>
+    <button class="tab-btn" data-tab="roster">Unidades y conductores</button>
+    <button class="tab-btn" data-tab="driver">Horario de conductor</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="clock"><span class="dot"></span><span id="topClock">--:--</span></div>
+    <button class="btn-solid" id="boardBtn">Vista pizarrón</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- PANEL TAB -->
+  <div id="tab-panel">
+    <div class="ramales-grid" id="ramalesGrid"></div>
+  </div>
+
+  <!-- ROSTER TAB -->
+  <div id="tab-roster" class="hidden">
+    <div class="section-head"><h2>Unidades (15) y conductores (23)</h2></div>
+    <div class="roster-grid">
+      <div class="roster-card">
+        <h3>Unidades</h3>
+        <div id="unidadesList"></div>
+        <button class="btn-add" id="addUnidad" style="margin-top:10px;">+ Agregar unidad</button>
+      </div>
+      <div class="roster-card">
+        <h3>Conductores</h3>
+        <div id="conductoresList"></div>
+        <button class="btn-add" id="addConductor" style="margin-top:10px;">+ Agregar conductor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER SCHEDULE TAB -->
+  <div id="tab-driver" class="hidden">
+    <div class="section-head"><h2>Horario individual de conductor</h2></div>
+    <div class="driver-controls">
+      <select id="driverSelect"></select>
+      <button class="btn-solid" id="printBtn">Imprimir</button>
+      <button class="btn-solid" id="copyBtn">Copiar texto</button>
+      <button class="btn-solid" id="copyLinkBtn" style="border-color:var(--next);color:var(--next);">🔗 Copiar enlace de su tarjeta</button>
+    </div>
+    <p style="color:var(--text-dim);font-size:12.5px;margin:-10px 0 20px;max-width:560px;">Mándale ese enlace al conductor (WhatsApp, SMS, etc). Al abrirlo en su celular le aparece solo su tarjeta con sus horarios, y se actualiza sola cuando tú cambies algo en el panel.</p>
+    <div id="printArea"></div>
+  </div>
+
+</div>
+
+<div class="board hidden" id="board">
+  <div class="board-top">
+    <div class="board-title">Ruta — pizarrón de salidas</div>
+    <div class="board-clock" id="boardClock">--:--</div>
+    <button class="board-exit" id="boardExit">Cerrar vista ✕</button>
+  </div>
+  <div class="board-grid" id="boardGrid"></div>
+</div>
+
+<div class="tarjeta-wrap hidden" id="tarjetaWrap">
+  <div id="tarjetaCard"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================= ESTADO Y PERSISTENCIA ======================= */
+const STORAGE_KEY = 'panel-ruta-estado-v1';
+let state = null;
+let saveTimer = null;
+
+function nowMinutes(){
+  const d = new Date();
+  return d.getHours()*60 + d.getMinutes();
+}
+function formatHora(m){
+  if(m===null || m===undefined) return '--:--';
+  let mm = ((Math.round(m)%1440)+1440)%1440;
+  const h = Math.floor(mm/60), mi = mm%60;
+  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');
+}
+
+function seedState(){
+  const unidades = Array.from({length:15}, (_,i)=>({id:'u'+(i+1), numero: 'Unidad '+String(i+1).padStart(2,'0')}));
+  const conductores = Array.from({length:23}, (_,i)=>({id:'c'+(i+1), nombre: 'Conductor '+String(i+1).padStart(2,'0')}));
+
+  function build(prefix, uIdx, cIdx, count){
+    const arr=[];
+    for(let i=0;i<count;i++){
+      arr.push({
+        id: prefix+'-'+i+'-'+Date.now()+Math.random().toString(36).slice(2,6),
+        unidadId: unidades[uIdx[i % uIdx.length]].id,
+        conductorId: conductores[cIdx[i % cIdx.length]].id,
+        horaSalida: null,
+        horaSalidaRaw: null,
+        estado: 'programada', // programada | siguiente | salio | regresada
+        manual: false,
+        tiempoVuelta: null,
+        horaRegreso: null
+      });
+    }
+    return arr;
+  }
+
+  return {
+    unidades,
+    conductores,
+    ramales: {
+      capilla: {
+        nombre: 'Capilla',
+        intervalo: 7,
+        margen: 2,
+        corridas: build('cap', [0,1,2,3,4,5,6,7], [0,1,2,3,4,5,6,7,8,9,10,11], 6)
+      },
+      secundaria: {
+        nombre: 'Secundaria',
+        intervalo: 8,
+        margen: 0,
+        corridas: build('sec', [8,9,10,11,12,13,14], [12,13,14,15,16,17,18,19,20,21,22], 6)
+      }
+    }
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if(res && res.value){
+      state = JSON.parse(res.value);
+      return;
+    }
+  }catch(e){ /* no existe todavia */ }
+  state = seedState();
+  ['capilla','secundaria'].forEach(recalcRamal);
+  await persist();
+}
+
+function persist(){
+  clearTimeout(saveTimer);
+  return new Promise(resolve=>{
+    saveTimer = setTimeout(async ()=>{
+      try{
+        await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+      }catch(e){ console.error('Error guardando estado', e); showToast('No se pudo guardar. Revisa tu conexión.'); }
+      resolve();
+    }, 250);
+  });
+}
+
+/* ======================= LOGICA DE NEGOCIO ======================= */
+// Interpretacion del margen "fantasma" (confirmada por el usuario: aplica a salida Y vuelta):
+// - Se guarda un tiempo "crudo" (horaSalidaRaw) que es el que se usa para encadenar
+//   la siguiente salida (mantiene el ritmo real del intervalo).
+// - El tiempo que se MUESTRA y se ENTREGA (horaSalida) es crudo + margen, solo en Capilla.
+// - Un horario editado a mano (manual) se respeta tal cual el checador lo escribe,
+//   se vuelve el nuevo punto de partida para lo que sigue, y no se le vuelve a sumar margen.
+// - Una salida ya marcada como "salió" usa la hora real observada (sin margen).
+function recalcRamal(key){
+  const ramal = state.ramales[key];
+  const margen = ramal.margen || 0;
+  let anchorRaw = null;
+  let siguienteAsignada = false;
+  const now = nowMinutes();
+
+  ramal.corridas.forEach(c=>{
+    if(c.estado === 'salio' || c.estado === 'regresada'){
+      anchorRaw = c.horaSalidaRaw != null ? c.horaSalidaRaw : c.horaSalida;
+      return;
+    }
+    if(c.manual){
+      anchorRaw = c.horaSalida; // el valor manual ya es el final, no se le suma margen
+      c.horaSalidaRaw = c.horaSalida;
+    } else {
+      anchorRaw = anchorRaw === null ? now : anchorRaw + ramal.intervalo;
+      c.horaSalidaRaw = anchorRaw;
+      c.horaSalida = anchorRaw + margen;
+    }
+    c.estado = siguienteAsignada ? 'programada' : 'siguiente';
+    siguienteAsignada = true;
+  });
+
+  // horas de regreso para las que ya tienen tiempo de vuelta capturado
+  ramal.corridas.forEach(c=>{
+    if(c.tiempoVuelta != null && c.horaSalidaRaw != null){
+      const regresoRaw = c.horaSalidaRaw + c.tiempoVuelta;
+      c.horaRegreso = regresoRaw + margen;
+    }
+  });
+}
+function recalcTodos(){ ['capilla','secundaria'].forEach(recalcRamal); }
+
+function unidadNombre(id){ const u = state.unidades.find(x=>x.id===id); return u ? u.numero : '—'; }
+function conductorNombre(id){ const c = state.conductores.find(x=>x.id===id); return c ? c.nombre : '—'; }
+
+function unidadesEnRuta(){
+  const set = new Set();
+  Object.values(state.ramales).forEach(r=>{
+    r.corridas.forEach(c=>{ if(c.estado==='salio') set.add(c.unidadId); });
+  });
+  return set;
+}
+function conductoresEnRuta(){
+  const set = new Set();
+  Object.values(state.ramales).forEach(r=>{
+    r.corridas.forEach(c=>{ if(c.estado==='salio') set.add(c.conductorId); });
+  });
+  return set;
+}
+function unidadesDisponibles(){
+  const enRuta = unidadesEnRuta();
+  return state.unidades.filter(u=>!enRuta.has(u.id));
+}
+function conductoresDisponibles(){
+  const enRuta = conductoresEnRuta();
+  return state.conductores.filter(c=>!enRuta.has(c.id));
+}
+
+/* ======================= RENDER: PANEL ======================= */
+function renderPanel(){
+  const grid = document.getElementById('ramalesGrid');
+  grid.innerHTML = '';
+  ['capilla','secundaria'].forEach(key=>{
+    grid.appendChild(renderRamalCol(key));
+  });
+}
+
+function renderRamalCol(key){
+  const ramal = state.ramales[key];
+  const col = document.createElement('div');
+  col.className = 'ramal-col ' + key;
+
+  const pendientes = ramal.corridas.filter(c=>c.estado==='programada' || c.estado==='siguiente');
+  const siguiente = pendientes.find(c=>c.estado==='siguiente');
+  const enRutaLista = ramal.corridas.filter(c=>c.estado==='salio');
+
+  const presets = [6,7,8,9];
+  col.innerHTML = `
+    <div class="ramal-head">
+      <div class="ramal-head-top">
+        <div class="ramal-name">${ramal.nombre}</div>
+        <div class="margen-tag ${ramal.margen ? '' : 'none'}">${ramal.margen ? '+'+ramal.margen+' min fantasma' : 'sin margen — va justo'}</div>
+      </div>
+      <div class="interval-row">
+        <label>Sale cada</label>
+        <input type="number" min="1" class="intervalo-input" data-ramal="${key}" value="${ramal.intervalo}">
+        <label>min</label>
+        ${presets.map(p=>`<button class="preset-btn ${p===ramal.intervalo?'active':''}" data-ramal="${key}" data-preset="${p}">${p}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="hero-next">
+      ${siguiente ? `
+        <div>
+          <div class="hero-label">SIGUIENTE SALIDA</div>
+          <div class="hero-time">${formatHora(siguiente.horaSalida)}</div>
+          <div class="hero-meta">${unidadNombre(siguiente.unidadId)} · ${conductorNombre(siguiente.conductorId)}</div>
+        </div>
+        <button class="icon-btn go" title="Marcar como salió" data-action="salio" data-ramal="${key}" data-id="${siguiente.id}" style="width:40px;height:40px;font-size:16px;">✓</button>
+      ` : `<div class="hero-empty">No hay salidas programadas. Agrega una abajo.</div>`}
+    </div>
+
+    <div class="subhead">Cola de salidas</div>
+    <div class="corridas-list" data-list="${key}"></div>
+
+    <div class="add-row">
+      <button class="btn-add" data-action="agregar" data-ramal="${key}">+ Agregar salida a la cola</button>
+    </div>
+
+    ${enRutaLista.length ? `
+      <div class="subhead">En ruta · regresando a base</div>
+      <div class="corridas-list" data-enruta="${key}"></div>
+    ` : ''}
+  `;
+
+  const list = col.querySelector(`[data-list="${key}"]`);
+  pendientes.forEach(c=> list.appendChild(renderCorridaRow(key, c)));
+  if(pendientes.length===0){
+    const p = document.createElement('div');
+    p.className='empty-note';
+    p.textContent='Cola vacía.';
+    list.appendChild(p);
+  }
+
+  const enRutaBox = col.querySelector(`[data-enruta="${key}"]`);
+  if(enRutaBox){
+    enRutaLista.forEach(c=> enRutaBox.appendChild(renderEnRutaRow(key, c)));
+  }
+
+  return col;
+}
+
+function renderCorridaRow(key, c){
+  const row = document.createElement('div');
+  row.className = 'corrida-row';
+  const timeClass = c.manual ? 'manual' : '';
+  row.innerHTML = `
+    <div class="corrida-time ${timeClass}">${formatHora(c.horaSalida)}</div>
+    <select class="sel" data-field="unidadId" data-ramal="${key}" data-id="${c.id}">
+      ${unidadOptions(c.unidadId)}
+    </select>
+    <select class="sel" data-field="conductorId" data-ramal="${key}" data-id="${c.id}">
+      ${conductorOptions(c.conductorId)}
+    </select>
+    <div class="row-actions">
+      <button class="icon-btn edit" title="Editar hora manualmente" data-action="editar-hora" data-ramal="${key}" data-id="${c.id}">✎</button>
+      <button class="icon-btn go" title="Marcar como salió" data-action="salio" data-ramal="${key}" data-id="${c.id}">✓</button>
+      <button class="icon-btn" title="Quitar de la cola" data-action="quitar" data-ramal="${key}" data-id="${c.id}">✕</button>
+    </div>
+  `;
+  return row;
+}
+
+function renderEnRutaRow(key, c){
+  const row = document.createElement('div');
+  row.className = 'corrida-row';
+  const now = nowMinutes();
+  const disponible = c.horaRegreso != null && c.horaRegreso <= now;
+  row.innerHTML = `
+    <div class="corrida-time salio">${formatHora(c.horaSalida)}</div>
+    <div style="font-size:13px;color:var(--text-dim);align-self:center;">${unidadNombre(c.unidadId)} · ${conductorNombre(c.conductorId)}</div>
+    <div style="align-self:center;">
+      ${disponible ? '<span class="badge ok">de vuelta en base</span>' : (c.horaRegreso!=null ? `<span class="badge enruta">regresa ${formatHora(c.horaRegreso)}</span>` : '<span class="badge enruta">en ruta</span>')}
+    </div>
+    <div class="row-actions">
+      ${disponible ? `<button class="icon-btn go" title="Confirmar regreso" data-action="confirmar-regreso" data-ramal="${key}" data-id="${c.id}">✓</button>` : ''}
+    </div>
+    <div class="vuelta-box">
+      <span>Tiempo de vuelta (min):</span>
+      <input type="number" min="1" data-action="tiempo-vuelta" data-ramal="${key}" data-id="${c.id}" value="${c.tiempoVuelta ?? ''}" placeholder="cualquier valor, ej. 43">
+      <span style="color:var(--text-faint);">(cualquier número: 43, 45, 51…)</span>
+      ${c.horaRegreso!=null ? `<span>Regreso estimado: <strong style="color:var(--text)">${formatHora(c.horaRegreso)}</strong></span>` : '<span>Captura el tiempo de vuelta para calcular el regreso.</span>'}
+    </div>
+  `;
+  return row;
+}
+
+function unidadOptions(selected){
+  return state.unidades.map(u=>`<option value="${u.id}" ${u.id===selected?'selected':''}>${u.numero}</option>`).join('');
+}
+function conductorOptions(selected){
+  return state.conductores.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${c.nombre}</option>`).join('');
+}
+
+/* ======================= RENDER: PIZARRÓN ======================= */
+function renderBoard(){
+  const grid = document.getElementById('boardGrid');
+  grid.innerHTML = '';
+  ['capilla','secundaria'].forEach(key=>{
+    const ramal = state.ramales[key];
+    const pendientes = ramal.corridas.filter(c=>c.estado==='programada'||c.estado==='siguiente');
+    const siguiente = pendientes.find(c=>c.estado==='siguiente');
+    const despues = pendientes.filter(c=>c!==siguiente).slice(0,4);
+    const enRutaCount = ramal.corridas.filter(c=>c.estado==='salio').length;
+
+    const col = document.createElement('div');
+    col.className = 'board-col ' + key;
+    col.innerHTML = `
+      <div class="board-ramal-name">${ramal.nombre}</div>
+      <div class="board-sub">Cada ${ramal.intervalo} min ${ramal.margen ? '· +'+ramal.margen+' min fantasma' : '· sin margen'}</div>
+      ${siguiente ? `
+        <div class="board-next-label">SIGUIENTE</div>
+        <div class="board-next-time">${formatHora(siguiente.horaSalida)}</div>
+        <div class="board-next-meta">${unidadNombre(siguiente.unidadId)} · ${conductorNombre(siguiente.conductorId)}</div>
+      ` : `<div class="board-next-meta" style="margin-top:20px;">Sin salidas programadas</div>`}
+      <div class="board-list">
+        ${despues.map(c=>`<div class="board-list-row"><span>${formatHora(c.horaSalida)}</span><span>${unidadNombre(c.unidadId)} · ${conductorNombre(c.conductorId)}</span></div>`).join('') || ''}
+      </div>
+      <div class="board-foot">${enRutaCount} unidad${enRutaCount===1?'':'es'} en ruta</div>
+    `;
+    grid.appendChild(col);
+  });
+}
+
+/* ======================= RENDER: ROSTER ======================= */
+function renderRoster(){
+  const uList = document.getElementById('unidadesList');
+  uList.innerHTML = '';
+  state.unidades.forEach((u,i)=>{
+    const row = document.createElement('div');
+    row.className = 'roster-item';
+    row.innerHTML = `
+      <span class="num">${String(i+1).padStart(2,'0')}</span>
+      <input type="text" value="${u.numero}" data-roster="unidad" data-id="${u.id}">
+      <button class="del" data-action="del-unidad" data-id="${u.id}">×</button>
+    `;
+    uList.appendChild(row);
+  });
+
+  const cList = document.getElementById('conductoresList');
+  cList.innerHTML = '';
+  state.conductores.forEach((c,i)=>{
+    const row = document.createElement('div');
+    row.className = 'roster-item';
+    row.innerHTML = `
+      <span class="num">${String(i+1).padStart(2,'0')}</span>
+      <input type="text" value="${c.nombre}" data-roster="conductor" data-id="${c.id}">
+      <button class="del" data-action="del-conductor" data-id="${c.id}">×</button>
+    `;
+    cList.appendChild(row);
+  });
+}
+
+/* ======================= RENDER: HORARIO CONDUCTOR ======================= */
+function renderDriverSelect(){
+  const sel = document.getElementById('driverSelect');
+  const prev = sel.value;
+  sel.innerHTML = state.conductores.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  if(prev) sel.value = prev;
+  renderDriverSchedule();
+}
+
+function renderDriverSchedule(){
+  const sel = document.getElementById('driverSelect');
+  const conductorId = sel.value;
+  const conductor = state.conductores.find(c=>c.id===conductorId);
+  const area = document.getElementById('printArea');
+  if(!conductor){ area.innerHTML = '<div class="empty-note">Selecciona un conductor.</div>'; return; }
+
+  const filas = [];
+  Object.entries(state.ramales).forEach(([key, ramal])=>{
+    ramal.corridas.forEach(c=>{
+      if(c.conductorId === conductorId){
+        filas.push({ ramalKey:key, ramalNombre: ramal.nombre, hora: c.horaSalida, unidad: unidadNombre(c.unidadId), regreso: c.horaRegreso, estado: c.estado });
+      }
+    });
+  });
+  filas.sort((a,b)=> (a.hora??9999) - (b.hora??9999));
+
+  const fecha = new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  area.innerHTML = `
+    <div class="print-head">
+      <h2>${conductor.nombre}</h2>
+      <p>Horario del día · ${fecha}</p>
+    </div>
+    ${filas.length ? `
+      <table class="sched">
+        <thead><tr><th>Salida</th><th>Ramal</th><th>Unidad</th><th>Regreso est.</th></tr></thead>
+        <tbody>
+          ${filas.map(f=>`
+            <tr>
+              <td class="hora">${formatHora(f.hora)}</td>
+              <td><span class="ramal-pill ${f.ramalKey}">${f.ramalNombre}</span></td>
+              <td>${f.unidad}</td>
+              <td class="hora">${f.regreso!=null ? formatHora(f.regreso) : '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : '<div class="empty-note">Este conductor no tiene salidas asignadas todavía.</div>'}
+  `;
+}
+
+/* ======================= TARJETA VIRTUAL (vista del conductor) ======================= */
+function renderTarjeta(conductorId){
+  const wrap = document.getElementById('tarjetaCard');
+  const conductor = state.conductores.find(c=>c.id===conductorId);
+  if(!conductor){
+    wrap.innerHTML = `<div class="tarjeta-card"><div class="tarjeta-empty">No se encontró este conductor. Pide al checador que te mande el enlace de nuevo.</div></div>`;
+    return;
+  }
+
+  const filas = [];
+  Object.entries(state.ramales).forEach(([key, ramal])=>{
+    ramal.corridas.forEach(c=>{
+      if(c.conductorId === conductorId){
+        filas.push({ ramalKey:key, ramalNombre: ramal.nombre, hora: c.horaSalida, unidad: unidadNombre(c.unidadId), regreso: c.horaRegreso, estado: c.estado });
+      }
+    });
+  });
+  filas.sort((a,b)=>(a.hora??9999)-(b.hora??9999));
+
+  const pendientes = filas.filter(f=>f.estado==='programada'||f.estado==='siguiente');
+  const siguiente = pendientes.find(f=>f.estado==='siguiente') || pendientes[0];
+  const ramalesUsados = new Set(filas.map(f=>f.ramalKey));
+  const cardClass = ramalesUsados.size > 1 ? 'mixto' : (ramalesUsados.size===1 ? [...ramalesUsados][0] : '');
+
+  const fecha = new Date().toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' });
+
+  wrap.innerHTML = `
+    <div class="tarjeta-card ${cardClass}">
+      <div class="tarjeta-head">
+        <div>
+          <div class="tarjeta-nombre">${conductor.nombre}</div>
+          <div class="tarjeta-fecha">${fecha}</div>
+        </div>
+        <div class="tarjeta-live"><span class="dot"></span>en vivo</div>
+      </div>
+
+      ${siguiente ? `
+        <div class="tarjeta-next">
+          <div class="tarjeta-next-label">TU PRÓXIMA SALIDA</div>
+          <div class="tarjeta-next-time">${formatHora(siguiente.hora)}</div>
+          <div class="tarjeta-next-meta">${siguiente.ramalNombre} · ${siguiente.unidad}</div>
+          <div class="tarjeta-next-detail">
+            <div>
+              <div class="lbl">SALE</div>
+              <div class="val">${formatHora(siguiente.hora)}</div>
+            </div>
+            <div>
+              <div class="lbl">DEBERÍA LLEGAR</div>
+              <div class="val">${siguiente.regreso != null ? formatHora(siguiente.regreso) : '—'}</div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${filas.length ? `
+        <div class="tarjeta-tabla-label">Tus vueltas de hoy</div>
+        <table class="tarjeta-tabla">
+          <thead><tr><th>Ramal</th><th>Sale</th><th>Llega</th></tr></thead>
+          <tbody>
+            ${filas.map(f=>{
+              const pasada = f.estado==='salio' || f.estado==='regresada';
+              const color = f.ramalKey==='capilla' ? 'var(--capilla)' : 'var(--secundaria)';
+              return `
+                <tr>
+                  <td><span class="tarjeta-ramal-dot" style="background:${color}"></span>${f.ramalNombre}</td>
+                  <td class="hora ${pasada?'pasada':''}">${formatHora(f.hora)}</td>
+                  <td class="hora ${pasada?'pasada':''}">${f.regreso!=null ? formatHora(f.regreso) : '—'}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      ` : '<div class="tarjeta-empty">Todavía no tienes salidas asignadas hoy.</div>'}
+
+      <div class="tarjeta-foot">Se actualiza sola · última actualización ${formatHora(nowMinutes())}</div>
+    </div>
+  `;
+}
+
+function getUrlConductorId(){
+  const params = new URLSearchParams(location.search);
+  return params.get('conductor');
+}
+
+async function pollTarjeta(conductorId){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if(res && res.value){
+      state = JSON.parse(res.value);
+      recalcTodos();
+      renderTarjeta(conductorId);
+    }
+  }catch(e){ /* sin datos aun */ }
+}
+
+/* ======================= EVENTOS ======================= */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function findCorrida(ramalKey, id){
+  return state.ramales[ramalKey].corridas.find(c=>c.id===id);
+}
+
+document.addEventListener('click', async (e)=>{
+  const t = e.target;
+
+  // tabs
+  if(t.matches('.tab-btn')){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    t.classList.add('active');
+    ['panel','roster','driver'].forEach(name=>{
+      document.getElementById('tab-'+name).classList.toggle('hidden', name !== t.dataset.tab);
+    });
+    if(t.dataset.tab==='driver') renderDriverSelect();
+    return;
+  }
+
+  // presets de intervalo
+  if(t.matches('.preset-btn')){
+    const ramal = state.ramales[t.dataset.ramal];
+    ramal.intervalo = parseInt(t.dataset.preset,10);
+    recalcRamal(t.dataset.ramal);
+    renderPanel();
+    await persist();
+    return;
+  }
+
+  // agregar salida
+  if(t.dataset.action==='agregar'){
+    const key = t.dataset.ramal;
+    const uDisp = unidadesDisponibles();
+    const cDisp = conductoresDisponibles();
+    const ramal = state.ramales[key];
+    const usados = new Set(ramal.corridas.map(c=>c.unidadId));
+    const usadosC = new Set(ramal.corridas.map(c=>c.conductorId));
+    const unidad = uDisp.find(u=>!usados.has(u.id)) || uDisp[0] || state.unidades[0];
+    const conductor = cDisp.find(c=>!usadosC.has(c.id)) || cDisp[0] || state.conductores[0];
+    ramal.corridas.push({
+      id: key+'-'+Date.now()+Math.random().toString(36).slice(2,6),
+      unidadId: unidad.id,
+      conductorId: conductor.id,
+      horaSalida: null, horaSalidaRaw: null,
+      estado: 'programada', manual:false,
+      tiempoVuelta: null, horaRegreso: null
+    });
+    recalcRamal(key);
+    renderPanel();
+    await persist();
+    return;
+  }
+
+  // quitar
+  if(t.dataset.action==='quitar'){
+    const key = t.dataset.ramal;
+    const ramal = state.ramales[key];
+    ramal.corridas = ramal.corridas.filter(c=>c.id!==t.dataset.id);
+    recalcRamal(key);
+    renderPanel();
+    await persist();
+    return;
+  }
+
+  // marcar salió
+  if(t.dataset.action==='salio'){
+    const key = t.dataset.ramal;
+    const c = findCorrida(key, t.dataset.id);
+    if(c){
+      const now = nowMinutes();
+      c.horaSalida = now;
+      c.horaSalidaRaw = now;
+      c.estado = 'salio';
+      recalcRamal(key);
+      renderPanel();
+      await persist();
+    }
+    return;
+  }
+
+  // confirmar regreso
+  if(t.dataset.action==='confirmar-regreso'){
+    const key = t.dataset.ramal;
+    const c = findCorrida(key, t.dataset.id);
+    if(c){
+      c.estado = 'regresada';
+      renderPanel();
+      await persist();
+    }
+    return;
+  }
+
+  // editar hora manual
+  if(t.dataset.action==='editar-hora'){
+    const key = t.dataset.ramal;
+    const c = findCorrida(key, t.dataset.id);
+    if(c){
+      const actual = formatHora(c.horaSalida);
+      const nueva = prompt('Nueva hora de salida (HH:MM, 24 horas):', actual);
+      if(nueva && /^\d{1,2}:\d{2}$/.test(nueva.trim())){
+        const [h,m] = nueva.trim().split(':').map(Number);
+        if(h>=0 && h<24 && m>=0 && m<60){
+          c.horaSalida = h*60+m;
+          c.horaSalidaRaw = c.horaSalida;
+          c.manual = true;
+          recalcRamal(key);
+          renderPanel();
+          await persist();
+        } else {
+          showToast('Hora inválida.');
+        }
+      } else if(nueva !== null){
+        showToast('Formato inválido. Usa HH:MM.');
+      }
+    }
+    return;
+  }
+
+  // roster: eliminar
+  if(t.dataset.action==='del-unidad'){
+    state.unidades = state.unidades.filter(u=>u.id!==t.dataset.id);
+    renderRoster(); renderPanel();
+    await persist();
+    return;
+  }
+  if(t.dataset.action==='del-conductor'){
+    state.conductores = state.conductores.filter(c=>c.id!==t.dataset.id);
+    renderRoster(); renderPanel();
+    await persist();
+    return;
+  }
+
+  // pizarrón
+  if(t.id==='boardBtn'){
+    recalcTodos();
+    renderBoard();
+    document.getElementById('board').classList.remove('hidden');
+    return;
+  }
+  if(t.id==='boardExit'){
+    document.getElementById('board').classList.add('hidden');
+    return;
+  }
+
+  // print / copy
+  if(t.id==='printBtn'){ window.print(); return; }
+  if(t.id==='copyBtn'){
+    const sel = document.getElementById('driverSelect');
+    const conductor = state.conductores.find(c=>c.id===sel.value);
+    if(!conductor) return;
+    const filas = [];
+    Object.entries(state.ramales).forEach(([key, ramal])=>{
+      ramal.corridas.forEach(c=>{
+        if(c.conductorId === sel.value) filas.push({ ramal: ramal.nombre, hora: c.horaSalida, unidad: unidadNombre(c.unidadId), regreso: c.horaRegreso });
+      });
+    });
+    filas.sort((a,b)=>(a.hora??9999)-(b.hora??9999));
+    let texto = conductor.nombre + ' — horario del día\n';
+    filas.forEach(f=>{ texto += `${formatHora(f.hora)}  ${f.ramal}  ${f.unidad}  regreso: ${f.regreso!=null?formatHora(f.regreso):'—'}\n`; });
+    navigator.clipboard.writeText(texto).then(()=>showToast('Horario copiado.')).catch(()=>showToast('No se pudo copiar.'));
+    return;
+  }
+
+  if(t.id==='copyLinkBtn'){
+    const sel = document.getElementById('driverSelect');
+    if(!sel.value) return;
+    const url = location.origin + location.pathname + '?conductor=' + encodeURIComponent(sel.value);
+    navigator.clipboard.writeText(url).then(()=>showToast('Enlace copiado. Mándaselo al conductor.')).catch(()=>showToast('No se pudo copiar. Copia el enlace manualmente: '+url));
+    return;
+  }
+
+  // roster: agregar
+  if(t.id==='addUnidad'){
+    const n = state.unidades.length+1;
+    state.unidades.push({id:'u'+Date.now(), numero:'Unidad '+String(n).padStart(2,'0')});
+    renderRoster();
+    await persist();
+    return;
+  }
+  if(t.id==='addConductor'){
+    const n = state.conductores.length+1;
+    state.conductores.push({id:'c'+Date.now(), nombre:'Conductor '+String(n).padStart(2,'0')});
+    renderRoster();
+    await persist();
+    return;
+  }
+});
+
+document.addEventListener('change', async (e)=>{
+  const t = e.target;
+
+  if(t.matches('.intervalo-input')){
+    const key = t.dataset.ramal;
+    const val = parseInt(t.value,10);
+    if(val && val>0){
+      state.ramales[key].intervalo = val;
+      recalcRamal(key);
+      renderPanel();
+      await persist();
+    }
+    return;
+  }
+
+  if(t.matches('select[data-field]')){
+    const key = t.dataset.ramal;
+    const c = findCorrida(key, t.dataset.id);
+    if(c){ c[t.dataset.field] = t.value; await persist(); }
+    return;
+  }
+
+  if(t.dataset.action==='tiempo-vuelta'){
+    const key = t.dataset.ramal;
+    const c = findCorrida(key, t.dataset.id);
+    if(c){
+      c.tiempoVuelta = t.value ? parseInt(t.value,10) : null;
+      recalcRamal(key);
+      renderPanel();
+      await persist();
+    }
+    return;
+  }
+
+  if(t.matches('[data-roster="unidad"]')){
+    const u = state.unidades.find(x=>x.id===t.dataset.id);
+    if(u){ u.numero = t.value; renderPanel(); await persist(); }
+    return;
+  }
+  if(t.matches('[data-roster="conductor"]')){
+    const c = state.conductores.find(x=>x.id===t.dataset.id);
+    if(c){ c.nombre = t.value; renderPanel(); await persist(); }
+    return;
+  }
+
+  if(t.id==='driverSelect'){ renderDriverSchedule(); return; }
+});
+
+/* ======================= RELOJ Y TICK ======================= */
+function updateClocks(){
+  const s = formatHora(nowMinutes());
+  document.getElementById('topClock').textContent = s;
+  const bc = document.getElementById('boardClock');
+  if(bc) bc.textContent = s;
+}
+
+function tick(){
+  updateClocks();
+  recalcTodos();
+  if(!document.getElementById('tab-panel').classList.contains('hidden')) renderPanel();
+  if(!document.getElementById('board').classList.contains('hidden')) renderBoard();
+}
+
+/* ======================= INIT ======================= */
+async function init(){
+  const conductorId = getUrlConductorId();
+
+  if(conductorId){
+    // Modo tarjeta: solo lectura, para el conductor en su celular
+    document.querySelector('.topbar').classList.add('hidden');
+    document.querySelector('.app').classList.add('hidden');
+    document.getElementById('tarjetaWrap').classList.remove('hidden');
+    await loadState();
+    renderTarjeta(conductorId);
+    setInterval(()=>pollTarjeta(conductorId), 15000);
+    return;
+  }
+
+  await loadState();
+  document.querySelector('.tab-btn[data-tab="panel"]').classList.add('active');
+  updateClocks();
+  renderPanel();
+  renderRoster();
+  setInterval(tick, 20000);
+}
+init();
+</script>
+</body>
+</html>
